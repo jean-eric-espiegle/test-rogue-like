@@ -107,4 +107,5 @@ export interface GameState {
   shopItems: Item[];
   pendingItems: Item[];
   turn: number;
+  pendingFloorClear: boolean;
 }
