@@ -198,7 +198,8 @@ export function buyShopItem(state: GameState, itemId: string): GameState {
 
 export function leaveShop(state: GameState): GameState {
   const nodeId = state.map.currentNodeId!;
-  const newMap = { ...unlockNextNodes(state.map, nodeId), nodes: state.map.nodes.map(n => n.id === nodeId ? { ...n, cleared: true } : n) };
+  const clearedMap = { ...state.map, nodes: state.map.nodes.map(n => n.id === nodeId ? { ...n, cleared: true } : n) };
+  const newMap = unlockNextNodes(clearedMap, nodeId);
   return { ...state, phase: 'map', shopItems: [], map: newMap };
 }
 
@@ -212,7 +213,8 @@ export function collectTreasureItem(state: GameState, itemId: string): GameState
   };
   if (newPending.length === 0) {
     const nodeId = state.map.currentNodeId!;
-    const newMap = { ...unlockNextNodes(s.map, nodeId), nodes: s.map.nodes.map(n => n.id === nodeId ? { ...n, cleared: true } : n) };
+    const clearedMap = { ...s.map, nodes: s.map.nodes.map(n => n.id === nodeId ? { ...n, cleared: true } : n) };
+    const newMap = unlockNextNodes(clearedMap, nodeId);
     s = { ...s, phase: 'map', map: newMap };
   }
   return s;
@@ -220,7 +222,8 @@ export function collectTreasureItem(state: GameState, itemId: string): GameState
 
 export function doRest(state: GameState, action: 'heal' | 'upgrade'): GameState {
   const nodeId = state.map.currentNodeId!;
-  const newMap = { ...unlockNextNodes(state.map, nodeId), nodes: state.map.nodes.map(n => n.id === nodeId ? { ...n, cleared: true } : n) };
+  const clearedMap = { ...state.map, nodes: state.map.nodes.map(n => n.id === nodeId ? { ...n, cleared: true } : n) };
+  const newMap = unlockNextNodes(clearedMap, nodeId);
 
   if (action === 'heal') {
     const healAmt = Math.round(state.player.stats.maxHp * 0.3);
