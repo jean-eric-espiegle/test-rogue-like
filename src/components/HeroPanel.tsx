@@ -71,9 +71,14 @@ export default function HeroPanel({ player, onUsePotion, onEquipItem }: Props) {
               {(['weapon', 'armor', 'ring', 'amulet'] as const).map(slot => {
                 const item = equipment[slot];
                 return (
-                  <div key={slot} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3, fontSize: 11 }}>
-                    <span style={{ color: '#555', textTransform: 'capitalize' }}>{slot}</span>
-                    {item ? <span style={{ color: RC[item.rarity] }}>{item.name}</span> : <span style={{ color: '#333' }}>—</span>}
+                  <div key={slot} style={{ marginBottom: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
+                      <span style={{ color: '#555', textTransform: 'capitalize' }}>{slot}</span>
+                      {item ? <span style={{ color: RC[item.rarity], fontWeight: 'bold' }}>{item.name}</span> : <span style={{ color: '#333' }}>—</span>}
+                    </div>
+                    {item && (
+                      <div style={{ color: '#666', fontSize: 10, marginTop: 1, marginLeft: 0 }}>{item.description}</div>
+                    )}
                   </div>
                 );
               })}

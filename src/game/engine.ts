@@ -24,7 +24,7 @@ export function createGame(): GameState {
   return {
     phase: 'map', player, map: startMap, floor: 1,
     combatLog: [{ id: uid(), text: 'The dungeon awaits. Choose your path wisely.', type: 'system' }],
-    activeMob: null, levelUpOptions: [], shopItems: [], pendingItems: [], turn: 0,
+    activeMob: null, levelUpOptions: [], shopItems: [], pendingItems: [], turn: 0, pendingFloorClear: false,
   };
 }
 
@@ -126,21 +126,23 @@ function handleMobDeath(state: GameState, mob: Mob): GameState {
     logEntries.unshift({ id: uid(), text: `Level up! You are now level ${newLevel}!`, type: 'levelup' });
   }
 
-  // Check if this was the boss — if so, next floor
   const clearedNode = state.map.nodes.find(n => n.id === nodeId);
-  if (clearedNode?.type === 'boss' && phase !== 'levelup') {
-    return handleFloorClear({ ...state, map: newMap, player: { ...state.player, xp: newXp, xpToNext: newXpToNext, level: newLevel, gold: state.player.gold + mob.goldReward, inventory: [...state.player.inventory, ...lootItems] }, combatLog: logEntries }, mob);
+  const isBossClear = clearedNode?.type === 'boss';
+  const updatedPlayer = { ...state.player, xp: newXp, xpToNext: newXpToNext, level: newLevel, gold: state.player.gold + mob.goldReward, inventory: [...state.player.inventory, ...lootItems] };
+
+  if (isBossClear && phase !== 'levelup') {
+    return handleFloorClear({ ...state, map: newMap, player: updatedPlayer, combatLog: logEntries });
   }
 
   return {
     ...state, phase, map: newMap, activeMob: null, levelUpOptions,
-    player: { ...state.player, xp: newXp, xpToNext: newXpToNext, level: newLevel, gold: state.player.gold + mob.goldReward, inventory: [...state.player.inventory, ...lootItems] },
+    player: updatedPlayer,
     combatLog: logEntries,
-    // Store boss-cleared flag for after levelup if needed
+    pendingFloorClear: isBossClear && phase === 'levelup',
   };
 }
 
-function handleFloorClear(state: GameState, mob: Mob): GameState {
+function handleFloorClear(state: GameState): GameState {
   const newFloor = state.floor + 1;
   if (newFloor > 5) return { ...state, phase: 'victory' };
   const newMap = generateMap();
@@ -155,8 +157,10 @@ export function chooseLevelUp(state: GameState, option: LevelUpOption): GameStat
   const base = { ...state.player.baseStats };
   if (option.stat === 'maxHp') { base.maxHp += option.amount; base.hp = Math.min(base.hp + option.amount, base.maxHp); }
   else (base as any)[option.stat] += option.amount;
-  let s: GameState = { ...state, phase: 'map', levelUpOptions: [], player: { ...state.player, baseStats: base } };
-  return recalcStats(s);
+  let s: GameState = { ...state, phase: 'map', levelUpOptions: [], pendingFloorClear: false, player: { ...state.player, baseStats: base } };
+  s = recalcStats(s);
+  if (state.pendingFloorClear) return handleFloorClear(s);
+  return s;
 }
 
 export function equipItem(state: GameState, itemId: string): GameState {
