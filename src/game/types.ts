@@ -1,17 +1,8 @@
-export type TileType = 'wall' | 'floor' | 'stairs' | 'door';
-
-export type RoomType = 'normal' | 'treasure' | 'shop' | 'boss' | 'start';
-
 export type ItemRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
-
 export type ItemSlot = 'weapon' | 'armor' | 'ring' | 'amulet' | 'potion';
-
 export type StatName = 'maxHp' | 'attack' | 'defense' | 'speed' | 'critChance' | 'critDamage';
 
-export interface Vec2 {
-  x: number;
-  y: number;
-}
+export type RoomType = 'combat' | 'elite' | 'boss' | 'shop' | 'treasure' | 'rest';
 
 export interface Item {
   id: string;
@@ -42,7 +33,6 @@ export interface Equipment {
 }
 
 export interface Player {
-  pos: Vec2;
   stats: Stats;
   baseStats: Stats;
   equipment: Equipment;
@@ -57,7 +47,6 @@ export interface Player {
 export interface Mob {
   id: string;
   name: string;
-  pos: Vec2;
   stats: Stats;
   xpReward: number;
   goldReward: number;
@@ -65,30 +54,24 @@ export interface Mob {
   color: string;
   isBoss: boolean;
   lootTable: ItemRarity[];
+  intent: 'attack' | 'defend' | 'buff'; // what mob will do next turn
 }
 
-export interface Room {
+export interface MapNode {
   id: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
+  col: number;   // column (0 = start row above boss)
+  row: number;   // row within column
   type: RoomType;
+  nextIds: string[]; // connections to next column
   cleared: boolean;
+  available: boolean; // player can travel here
   visited: boolean;
-  items: Item[];
-  mobs: Mob[];
-  shopItems?: Item[];
 }
 
-export interface Tile {
-  type: TileType;
-  roomId?: string;
-  revealed: boolean;
-  visible: boolean;
+export interface MapGraph {
+  nodes: MapNode[];
+  currentNodeId: string | null;
 }
-
-export type MapGrid = Tile[][];
 
 export interface CombatLog {
   id: string;
@@ -104,19 +87,19 @@ export interface LevelUpOption {
 }
 
 export type GamePhase =
-  | 'playing'
+  | 'map'
   | 'combat'
   | 'levelup'
   | 'shop'
   | 'treasure'
+  | 'rest'
   | 'gameover'
   | 'victory';
 
 export interface GameState {
   phase: GamePhase;
   player: Player;
-  map: MapGrid;
-  rooms: Room[];
+  map: MapGraph;
   floor: number;
   combatLog: CombatLog[];
   activeMob: Mob | null;
